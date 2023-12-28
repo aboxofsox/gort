@@ -13,16 +13,19 @@ func NewStore() *Store {
 	}
 }
 
-func (s *Store) Add(key string, value any) {
+func (s *Store) Set(key string, value any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.Items[key] = value
 }
 
-func (s *Store) Get(key string) any {
+func (s *Store) Get(key string) (any, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.Items[key]
+	if _, ok := s.Items[key]; !ok {
+		return nil, false
+	}
+	return s.Items[key], true
 }
 
 func (s *Store) Remove(key string) {

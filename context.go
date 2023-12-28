@@ -11,6 +11,7 @@ type Context struct {
 	Params  map[string]string
 	Writer  http.ResponseWriter
 	Request *http.Request
+	Store   *Store
 }
 
 // SetHeader sets a header in the response.
