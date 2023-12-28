@@ -197,3 +197,58 @@ func TestRTree(t *testing.T) {
 		return
 	}
 }
+
+func TestStore(t *testing.T) {
+	router := NewRouter()
+
+	router.AddRoute(http.MethodGet, "/store/:key", func(ctx *Context) {
+		value, ok := ctx.Store.Get(ctx.Params["key"])
+		if ok {
+			ctx.JSON(value)
+			return
+		}
+		key := ctx.Params["key"]
+
+		ctx.Store.Set(key, ctx.Request.RemoteAddr)
+		ctx.JSON("ok")
+	})
+
+	ts := httptest.NewServer(router)
+	defer ts.Close()
+
+	res, err := http.Get(ts.URL + "/store/foo")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("expected status code to be %d, got %d", http.StatusOK, res.StatusCode)
+		return
+	}
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if string(data) != "\"ok\"" {
+		t.Error("expected response body to be \"ok\"")
+		return
+	}
+
+	value, ok := router.store.Get("foo")
+	if !ok {
+		t.Error("expected ok to be true")
+		return
+	}
+
+	if value == nil {
+		t.Error("unexpected nil value")
+		return
+	}
+
+}

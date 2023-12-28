@@ -14,11 +14,13 @@ type Route struct {
 
 type Router struct {
 	routes *rtree
+	store  *Store
 }
 
 func NewRouter() *Router {
 	return &Router{
 		routes: newRTree(),
+		store:  NewStore(),
 	}
 }
 
@@ -59,6 +61,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		Params:  extractParams(req.URL.Path, route.Pattern),
 		Writer:  w,
 		Request: req,
+		Store:   r.store,
 	}
 
 	route.Handler(ctx)
