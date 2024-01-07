@@ -1,6 +1,7 @@
 package gort
 
 import (
+	"database/sql"
 	"encoding/json"
 	"html/template"
 	"net/http"
@@ -12,6 +13,12 @@ type Context struct {
 	Writer  http.ResponseWriter
 	Request *http.Request
 	Store   *Store
+	DB      *sql.DB
+}
+
+// Param returns the value of the given parameter.
+func (ctx *Context) Param(name string) string {
+	return ctx.Params[name]
 }
 
 // SetHeader sets a header in the response.
@@ -24,6 +31,21 @@ func (ctx *Context) SetHeaders(headers map[string]string) {
 	for k, v := range headers {
 		ctx.SetHeader(k, v)
 	}
+}
+
+// SetCookie sets a cookie in the response.
+func (ctx *Context) SetCookie(cookie *http.Cookie) {
+	http.SetCookie(ctx.Writer, cookie)
+}
+
+// SetStatus sets the HTTP status code.
+func (ctx *Context) SetStatus(code int) {
+	ctx.Writer.WriteHeader(code)
+}
+
+// GetHeader returns the value of the given header.
+func (ctx *Context) GetHeader(key string) string {
+	return ctx.Request.Header.Get(key)
 }
 
 // Send writes data to the response body.
