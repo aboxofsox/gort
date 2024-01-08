@@ -2,6 +2,7 @@ package gort
 
 import (
 	"net/http"
+	"os"
 )
 
 type HandlerFunc func(*Context)
@@ -16,12 +17,14 @@ type Router struct {
 	routes      *rtree
 	store       *Store
 	middlewares []HandlerFunc
+	Logger      *Logger
 }
 
 func New() *Router {
 	return &Router{
 		routes: newRTree(),
 		store:  NewStore(),
+		Logger: NewLogger(os.Stdout),
 	}
 }
 
@@ -96,6 +99,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		Writer:  w,
 		Request: req,
 		Store:   r.store,
+		Logger:  r.Logger,
 	}
 
 	for _, handler := range r.middlewares {

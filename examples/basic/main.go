@@ -33,7 +33,7 @@ func handleUser(ctx *gort.Context) {
 		return
 	}
 
-	ctx.JSON(user)
+	ctx.JSON(http.StatusOK, user)
 }
 
 func main() {

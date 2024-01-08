@@ -68,9 +68,9 @@ func (s *Server) FileServer(dir, prefix string) error {
 func (s *Server) registerRoute(method, pattern string, fileContent []byte, isHTML bool) {
 	s.Router.AddRoute(method, pattern, func(ctx *Context) {
 		if isHTML {
-			ctx.HTML(string(fileContent))
+			ctx.HTML(http.StatusOK, string(fileContent))
 		} else {
-			ctx.Send(fileContent)
+			ctx.Send(http.StatusOK, fileContent)
 		}
 	})
 }

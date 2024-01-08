@@ -610,13 +610,13 @@ func TestGort(t *testing.T) {
 		router.AddRoute(http.MethodGet, "/store/:key", func(ctx *Context) {
 			value, ok := ctx.Store.Get(ctx.Params["key"])
 			if ok {
-				ctx.JSON(value)
+				ctx.JSON(http.StatusOK, value)
 				return
 			}
 			key := ctx.Params["key"]
 
 			ctx.Store.Set(key, ctx.Request.RemoteAddr)
-			ctx.JSON("ok")
+			ctx.JSON(http.StatusOK, "ok")
 		})
 
 		ts := httptest.NewServer(router)
@@ -827,7 +827,6 @@ func TestGort(t *testing.T) {
 
 	t.Run("SetStatus", func(t *testing.T) {
 		router.AddRoute(http.MethodGet, "/status", func(ctx *Context) {
-			ctx.SetStatus(http.StatusCreated)
 			ctx.WriteString(http.StatusOK, "hello")
 		})
 
@@ -842,8 +841,8 @@ func TestGort(t *testing.T) {
 
 		defer res.Body.Close()
 
-		if res.StatusCode != http.StatusCreated {
-			t.Errorf("expected status code to be %d, got %d", http.StatusCreated, res.StatusCode)
+		if res.StatusCode != http.StatusOK {
+			t.Errorf("expected status code to be %d, got %d", http.StatusOK, res.StatusCode)
 			return
 		}
 
@@ -854,7 +853,7 @@ func TestGort(t *testing.T) {
 		}
 
 		if string(data) != "hello" {
-			t.Error("expected response body to be hello")
+			t.Error("expected response body to be hello, got ", string(data))
 			return
 		}
 	})
@@ -902,7 +901,7 @@ func TestGort(t *testing.T) {
 
 	t.Run("Send", func(t *testing.T) {
 		router.AddRoute(http.MethodGet, "/send", func(ctx *Context) {
-			ctx.Send([]byte("hello"))
+			ctx.Send(http.StatusOK, []byte("hello"))
 		})
 
 		ts := httptest.NewServer(router)
@@ -928,7 +927,7 @@ func TestGort(t *testing.T) {
 		}
 
 		if string(data) != "hello" {
-			t.Error("expected response body to be hello")
+			t.Error("expected response body to be hello, got ", string(data))
 			return
 		}
 	})
@@ -939,9 +938,7 @@ func TestGort(t *testing.T) {
 		})
 
 		router.AddRoute(http.MethodGet, "/redirected", func(ctx *Context) {
-			ctx.SetStatus(http.StatusFound)
-			ctx.SetHeader("Location", "/redirected")
-			ctx.WriteString(http.StatusOK, "hello")
+			ctx.WriteString(http.StatusFound, "hello")
 		})
 
 		ts := httptest.NewServer(router)
@@ -967,7 +964,7 @@ func TestGort(t *testing.T) {
 		}
 
 		if string(data) != "hello" {
-			t.Error("expected response body to be hello")
+			t.Error("expected response body to be hello, got ", string(data))
 			return
 		}
 	})

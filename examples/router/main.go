@@ -41,7 +41,7 @@ func main() {
 			return
 		}
 
-		ctx.JSON(users)
+		ctx.JSON(http.StatusOK, users)
 	})
 
 	router.AddRoute(http.MethodGet, "/store/:key", func(ctx *gort.Context) {
@@ -52,11 +52,11 @@ func main() {
 		}
 
 		ctx.Store.Set(key, ctx.Request.RemoteAddr)
-		ctx.JSON("ok")
+		ctx.JSON(http.StatusOK, "ok")
 	})
 
 	router.AddRoute(http.MethodGet, "/store", func(ctx *gort.Context) {
-		ctx.JSON(ctx.Store.Items)
+		ctx.JSON(http.StatusOK, ctx.Store.Items)
 	})
 
 	err := http.ListenAndServe(":8080", router)

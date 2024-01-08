@@ -23,7 +23,7 @@ func main() {
 		}
 
 		ctx.Store.Set(key, value) // set the value in the store
-		ctx.JSON("ok")
+		ctx.JSON(http.StatusOK, "ok")
 	})
 
 	router.AddRoute(http.MethodGet, "/store/:key", func(ctx *gort.Context) {
@@ -39,7 +39,7 @@ func main() {
 			return
 		}
 
-		ctx.JSON(value)
+		ctx.JSON(http.StatusOK, value)
 	})
 
 	err := http.ListenAndServe(":8080", router)

@@ -8,10 +8,12 @@ import (
 )
 
 type Context struct {
-	Params  map[string]string
-	Writer  http.ResponseWriter
-	Request *http.Request
-	Store   *Store
+	Params    map[string]string
+	Writer    http.ResponseWriter
+	Request   *http.Request
+	Store     *Store
+	Logger    *Logger
+	isWritten bool
 }
 
 // Param returns the value of the given parameter.
@@ -38,7 +40,12 @@ func (ctx *Context) SetCookie(cookie *http.Cookie) {
 
 // SetStatus sets the HTTP status code.
 func (ctx *Context) SetStatus(code int) {
+	if ctx.isWritten {
+		ctx.Logger.Log(WARNING, "superflous call to SetStatus")
+		return
+	}
 	ctx.Writer.WriteHeader(code)
+	ctx.isWritten = true
 }
 
 // GetHeader returns the value of the given header.
@@ -47,17 +54,33 @@ func (ctx *Context) GetHeader(key string) string {
 }
 
 // Send writes data to the response body.
-func (ctx *Context) Send(data []byte) {
+func (ctx *Context) Send(statusCode int, data []byte) {
+	if ctx.isWritten {
+		ctx.Logger.Log(WARNING, "superflous call to Send")
+		return
+	}
+	ctx.Writer.WriteHeader(statusCode)
 	ctx.Writer.Write(data)
+	ctx.isWritten = true
 }
 
 // SendString writes a string to the response body.
 func (ctx *Context) WriteString(statusCode int, s string) {
+	if ctx.isWritten {
+		ctx.Logger.Log(WARNING, "superflous call to WriteString")
+		return
+	}
+	ctx.Writer.WriteHeader(statusCode)
 	ctx.Writer.Write([]byte(s))
+	ctx.isWritten = true
 }
 
 // SendJSON writes a JSON object to the response body.
-func (ctx *Context) JSON(a any) {
+func (ctx *Context) JSON(statusCode int, a any) {
+	if ctx.isWritten {
+		ctx.Logger.Log(WARNING, "superflous call to JSON")
+		return
+	}
 	ctx.Writer.Header().Set("Content-Type", "application/json")
 	jsn, err := json.MarshalIndent(a, "", "  ")
 	if err != nil {
@@ -65,53 +88,95 @@ func (ctx *Context) JSON(a any) {
 		return
 	}
 	ctx.Writer.Write(jsn)
+	ctx.isWritten = true
 }
 
 // SendJSON writes a JSON object to the response body.
-func (ctx *Context) HTML(html string) {
+func (ctx *Context) HTML(statusCode int, html string) {
+	if ctx.isWritten {
+		ctx.Logger.Log(WARNING, "superflous call to HTML")
+		return
+	}
 	ctx.Writer.Header().Set("Content-Type", "text/html")
+	ctx.Writer.WriteHeader(http.StatusOK)
 	ctx.Writer.Write([]byte(template.HTML(html)))
+	ctx.isWritten = true
 }
 
 // Redirect redirects the request to a new URL.
 func (ctx *Context) Redirect(path string) {
+	if ctx.isWritten {
+		ctx.Logger.Log(WARNING, "superflous call to Redirect")
+		return
+	}
 	http.Redirect(ctx.Writer, ctx.Request, path, http.StatusFound)
+	ctx.isWritten = true
 }
 
 // NotFound sets the HTTP status code.
 func (ctx *Context) NotFound() {
+	if ctx.isWritten {
+		ctx.Logger.Log(WARNING, "superflous call to NotFound")
+		return
+	}
 	ctx.Writer.WriteHeader(http.StatusNotFound)
 	ctx.Writer.Write([]byte("Not Found"))
+	ctx.isWritten = true
 }
 
 // MethodNotAllowed sets the HTTP status code 405 and writes a message to the response body.
 func (ctx *Context) MethodNotAllowed() {
+	if ctx.isWritten {
+		ctx.Logger.Log(WARNING, "superflous call to MethodNotAllowed")
+		return
+	}
 	ctx.Writer.WriteHeader(http.StatusMethodNotAllowed)
 	ctx.Writer.Write([]byte("Method Not Allowed"))
+	ctx.isWritten = true
 }
 
 // BadRequest sets the HTTP status code 400 and writes a message to the response body.
 func (ctx *Context) BadRequest() {
+	if ctx.isWritten {
+		ctx.Logger.Log(WARNING, "superflous call to BadRequest")
+		return
+	}
 	ctx.Writer.WriteHeader(http.StatusBadRequest)
 	ctx.Writer.Write([]byte("Bad Request"))
+	ctx.isWritten = true
 }
 
 // InternalServerError sets the HTTP status code 500 and writes a message to the response body.
 func (ctx *Context) InternalServerError() {
+	if ctx.isWritten {
+		ctx.Logger.Log(WARNING, "superflous call to InternalServerError")
+		return
+	}
 	ctx.Writer.WriteHeader(http.StatusInternalServerError)
 	ctx.Writer.Write([]byte("Internal Server Error"))
+	ctx.isWritten = true
 }
 
 // Unauthorized sets the HTTP status code 401 and writes a message to the response body.
 func (ctx *Context) Unauthorized() {
+	if ctx.isWritten {
+		ctx.Logger.Log(WARNING, "superflous call to Unauthorized")
+		return
+	}
 	ctx.Writer.WriteHeader(http.StatusUnauthorized)
 	ctx.Writer.Write([]byte("Unauthorized"))
+	ctx.isWritten = true
 }
 
 // Forbidden sets the HTTP status code 403 and writes a message to the response body.
 func (ctx *Context) Forbidden() {
+	if ctx.isWritten {
+		ctx.Logger.Log(WARNING, "superflous call to Forbidden")
+		return
+	}
 	ctx.Writer.WriteHeader(http.StatusForbidden)
 	ctx.Writer.Write([]byte("Forbidden"))
+	ctx.isWritten = true
 }
 
 // extractParams extracts the parameters from the given path based on the provided pattern.
