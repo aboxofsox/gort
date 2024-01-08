@@ -26,17 +26,16 @@ func loggingMiddleware(ctx *gort.Context) {
 }
 
 func main() {
-	router := gort.NewRouter()
+	router := gort.New()
 
 	users := map[string]string{
 		"123": "bar",
 	}
 
-	router.AddMiddleware(userMiddleware(users))
-	router.AddMiddleware(loggingMiddleware)
+	router.AddMiddlewares(userMiddleware(users), loggingMiddleware)
 
 	router.AddRoute(http.MethodGet, "/users/:id", func(ctx *gort.Context) {
-		ctx.WriteString("hello world")
+		ctx.WriteString(http.StatusOK, "the user middleware is responsable for setting the X-User header")
 	})
 
 	err := http.ListenAndServe(":8080", router)

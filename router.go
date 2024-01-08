@@ -18,7 +18,7 @@ type Router struct {
 	middlewares []HandlerFunc
 }
 
-func NewRouter() *Router {
+func New() *Router {
 	return &Router{
 		routes: newRTree(),
 		store:  NewStore(),
@@ -39,11 +39,35 @@ func (r *Router) AddRoute(method, pattern string, handler HandlerFunc) {
 	r.routes.add(route)
 }
 
+func (r *Router) GET(pattern string, handler HandlerFunc) {
+	r.AddRoute(http.MethodGet, pattern, handler)
+}
+
+func (r *Router) POST(pattern string, handler HandlerFunc) {
+	r.AddRoute(http.MethodPost, pattern, handler)
+}
+
+func (r *Router) PUT(pattern string, handler HandlerFunc) {
+	r.AddRoute(http.MethodPut, pattern, handler)
+}
+
+func (r *Router) DELETE(pattern string, handler HandlerFunc) {
+	r.AddRoute(http.MethodDelete, pattern, handler)
+}
+
+func (r *Router) PATCH(pattern string, handler HandlerFunc) {
+	r.AddRoute(http.MethodPatch, pattern, handler)
+}
+
 // AddMiddleware adds a new middleware to the router.
 // It takes the middleware function as parameter.
 // The middleware function is called before the handler function.
 func (r *Router) AddMiddleware(handler HandlerFunc) {
 	r.middlewares = append(r.middlewares, handler)
+}
+
+func (r *Router) AddMiddlewares(handlers ...HandlerFunc) {
+	r.middlewares = append(r.middlewares, handlers...)
 }
 
 // Find returns the route that matches the given path.

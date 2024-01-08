@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	router := gort.NewRouter()
+	router := gort.New()
 
 	router.AddRoute(http.MethodGet, "/store/:key/:value", func(ctx *gort.Context) {
 		key, ok := ctx.Params["key"]

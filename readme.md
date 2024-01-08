@@ -182,3 +182,12 @@ func main() {
 }
 
 ```
+
+## Benchmarks
+*Copied from [web-framework-benchmark](https://github.com/vishr/web-framework-benchmark)*
+```
+BenchmarkGortStatic-16             17712             62738 ns/op           39790 B/op        942 allocs/op
+BenchmarkGortGitHubAPI-16          10000            114071 ns/op           90369 B/op       1209 allocs/op
+BenchmarkGortGplusAPI-16          183368              6456 ns/op            6462 B/op         86 allocs/op
+BenchmarkGortParseAPI-16           97270             11991 ns/op            7891 B/op        139 allocs/op
+```

@@ -1,7 +1,6 @@
 package gort
 
 import (
-	"database/sql"
 	"encoding/json"
 	"html/template"
 	"net/http"
@@ -13,7 +12,6 @@ type Context struct {
 	Writer  http.ResponseWriter
 	Request *http.Request
 	Store   *Store
-	DB      *sql.DB
 }
 
 // Param returns the value of the given parameter.
@@ -54,8 +52,7 @@ func (ctx *Context) Send(data []byte) {
 }
 
 // SendString writes a string to the response body.
-func (ctx *Context) WriteString(s string) {
-	ctx.Writer.Header().Set("Content-Type", "text/plain")
+func (ctx *Context) WriteString(statusCode int, s string) {
 	ctx.Writer.Write([]byte(s))
 }
 

@@ -15,7 +15,7 @@ type Server struct {
 
 func NewServer() *Server {
 	return &Server{
-		Router: NewRouter(),
+		Router: New(),
 		Store:  NewStore(),
 	}
 }
