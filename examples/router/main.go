@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	router := gort.NewRouter()
+	router := gort.New()
 
 	userData := map[string]string{
 		"foo": "bar",
@@ -26,7 +26,7 @@ func main() {
 			return
 		}
 
-		ctx.WriteString("hello " + user)
+		ctx.WriteString(http.StatusOK, "hello "+user)
 	})
 
 	router.AddRoute(http.MethodGet, "/users", func(ctx *gort.Context) {
@@ -37,7 +37,7 @@ func main() {
 		}
 
 		if len(users) == 0 {
-			ctx.WriteString("no users")
+			ctx.WriteString(http.StatusNotFound, "no users")
 			return
 		}
 

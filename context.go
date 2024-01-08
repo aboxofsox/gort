@@ -14,6 +14,11 @@ type Context struct {
 	Store   *Store
 }
 
+// Param returns the value of the given parameter.
+func (ctx *Context) Param(name string) string {
+	return ctx.Params[name]
+}
+
 // SetHeader sets a header in the response.
 func (ctx *Context) SetHeader(key, value string) {
 	ctx.Writer.Header().Set(key, value)
@@ -26,14 +31,28 @@ func (ctx *Context) SetHeaders(headers map[string]string) {
 	}
 }
 
+// SetCookie sets a cookie in the response.
+func (ctx *Context) SetCookie(cookie *http.Cookie) {
+	http.SetCookie(ctx.Writer, cookie)
+}
+
+// SetStatus sets the HTTP status code.
+func (ctx *Context) SetStatus(code int) {
+	ctx.Writer.WriteHeader(code)
+}
+
+// GetHeader returns the value of the given header.
+func (ctx *Context) GetHeader(key string) string {
+	return ctx.Request.Header.Get(key)
+}
+
 // Send writes data to the response body.
 func (ctx *Context) Send(data []byte) {
 	ctx.Writer.Write(data)
 }
 
 // SendString writes a string to the response body.
-func (ctx *Context) WriteString(s string) {
-	ctx.Writer.Header().Set("Content-Type", "text/plain")
+func (ctx *Context) WriteString(statusCode int, s string) {
 	ctx.Writer.Write([]byte(s))
 }
 

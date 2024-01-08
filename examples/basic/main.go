@@ -1,22 +1,24 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/aboxofsox/gort"
 )
 
 func writeMessage(msg string) gort.HandlerFunc {
 	return func(ctx *gort.Context) {
-		ctx.WriteString(msg)
+		ctx.WriteString(http.StatusOK, msg)
 	}
 }
 
 func ping(ctx *gort.Context) {
-	ctx.WriteString("pong")
+	ctx.WriteString(http.StatusOK, "pong")
 }
 
 func hello(ctx *gort.Context) {
 	name := ctx.Params["name"]
-	ctx.WriteString("Hello " + name)
+	ctx.WriteString(http.StatusOK, "Hello "+name)
 }
 
 func handleUser(ctx *gort.Context) {
@@ -27,7 +29,7 @@ func handleUser(ctx *gort.Context) {
 
 	user, ok := userData[ctx.Params["id"]]
 	if !ok {
-		ctx.WriteString("User not found")
+		ctx.WriteString(http.StatusOK, "User not found")
 		return
 	}
 
