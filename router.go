@@ -22,9 +22,10 @@ type Router struct {
 
 func New() *Router {
 	return &Router{
-		routes: newRTree(),
-		store:  NewStore(),
-		Logger: NewLogger(os.Stdout),
+		routes:      newRTree(),
+		store:       NewStore(),
+		Logger:      NewLogger(os.Stdout),
+		middlewares: make([]HandlerFunc, 0),
 	}
 }
 
@@ -34,12 +35,11 @@ func New() *Router {
 // The pattern parameter specifies the URL pattern that the route should match.
 // The handler parameter is the function that will be called to handle the request.
 func (r *Router) AddRoute(method, pattern string, handler HandlerFunc) {
-	route := &Route{
+	r.routes.add(&Route{
 		Method:  method,
 		Pattern: pattern,
 		Handler: handler,
-	}
-	r.routes.add(route)
+	})
 }
 
 func (r *Router) GET(pattern string, handler HandlerFunc) {

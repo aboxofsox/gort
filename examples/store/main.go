@@ -42,7 +42,7 @@ func main() {
 		ctx.JSON(http.StatusOK, value)
 	})
 
-	err := http.ListenAndServe(":8080", router)
+	err := http.ListenAndServe("127.0.0.1:8080", router)
 	if err != nil {
 		panic(err)
 	}

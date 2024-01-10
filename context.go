@@ -2,7 +2,6 @@ package gort
 
 import (
 	"encoding/json"
-	"html/template"
 	"net/http"
 	"strings"
 )
@@ -14,6 +13,20 @@ type Context struct {
 	Store     *Store
 	Logger    *Logger
 	isWritten bool
+}
+
+func CreateContext(w http.ResponseWriter, r *http.Request, store *Store, logger *Logger) *Context {
+	return &Context{
+		Params:  make(map[string]string),
+		Writer:  w,
+		Request: r,
+		Store:   store,
+		Logger:  logger,
+	}
+}
+
+func (ctx *Context) setParams(params map[string]string) {
+	ctx.Params = params
 }
 
 // Param returns the value of the given parameter.
@@ -59,8 +72,7 @@ func (ctx *Context) Send(statusCode int, data []byte) {
 		ctx.Logger.Log(WARNING, "superflous call to Send")
 		return
 	}
-	ctx.Writer.WriteHeader(statusCode)
-	ctx.Writer.Write(data)
+	write(ctx, statusCode, data)
 	ctx.isWritten = true
 }
 
@@ -70,8 +82,7 @@ func (ctx *Context) WriteString(statusCode int, s string) {
 		ctx.Logger.Log(WARNING, "superflous call to WriteString")
 		return
 	}
-	ctx.Writer.WriteHeader(statusCode)
-	ctx.Writer.Write([]byte(s))
+	write(ctx, statusCode, []byte(s))
 	ctx.isWritten = true
 }
 
@@ -98,8 +109,7 @@ func (ctx *Context) HTML(statusCode int, html string) {
 		return
 	}
 	ctx.Writer.Header().Set("Content-Type", "text/html")
-	ctx.Writer.WriteHeader(http.StatusOK)
-	ctx.Writer.Write([]byte(template.HTML(html)))
+	write(ctx, statusCode, []byte(html))
 	ctx.isWritten = true
 }
 
@@ -119,8 +129,7 @@ func (ctx *Context) NotFound() {
 		ctx.Logger.Log(WARNING, "superflous call to NotFound")
 		return
 	}
-	ctx.Writer.WriteHeader(http.StatusNotFound)
-	ctx.Writer.Write([]byte("Not Found"))
+	write(ctx, http.StatusNotFound, []byte("Not Found"))
 	ctx.isWritten = true
 }
 
@@ -130,8 +139,7 @@ func (ctx *Context) MethodNotAllowed() {
 		ctx.Logger.Log(WARNING, "superflous call to MethodNotAllowed")
 		return
 	}
-	ctx.Writer.WriteHeader(http.StatusMethodNotAllowed)
-	ctx.Writer.Write([]byte("Method Not Allowed"))
+	write(ctx, http.StatusMethodNotAllowed, []byte("Method Not Allowed"))
 	ctx.isWritten = true
 }
 
@@ -141,8 +149,7 @@ func (ctx *Context) BadRequest() {
 		ctx.Logger.Log(WARNING, "superflous call to BadRequest")
 		return
 	}
-	ctx.Writer.WriteHeader(http.StatusBadRequest)
-	ctx.Writer.Write([]byte("Bad Request"))
+	write(ctx, http.StatusBadRequest, []byte("Bad Request"))
 	ctx.isWritten = true
 }
 
@@ -152,8 +159,7 @@ func (ctx *Context) InternalServerError() {
 		ctx.Logger.Log(WARNING, "superflous call to InternalServerError")
 		return
 	}
-	ctx.Writer.WriteHeader(http.StatusInternalServerError)
-	ctx.Writer.Write([]byte("Internal Server Error"))
+	write(ctx, http.StatusInternalServerError, []byte("Internal Server Error"))
 	ctx.isWritten = true
 }
 
@@ -163,8 +169,7 @@ func (ctx *Context) Unauthorized() {
 		ctx.Logger.Log(WARNING, "superflous call to Unauthorized")
 		return
 	}
-	ctx.Writer.WriteHeader(http.StatusUnauthorized)
-	ctx.Writer.Write([]byte("Unauthorized"))
+	write(ctx, http.StatusUnauthorized, []byte("Unauthorized"))
 	ctx.isWritten = true
 }
 
@@ -174,8 +179,7 @@ func (ctx *Context) Forbidden() {
 		ctx.Logger.Log(WARNING, "superflous call to Forbidden")
 		return
 	}
-	ctx.Writer.WriteHeader(http.StatusForbidden)
-	ctx.Writer.Write([]byte("Forbidden"))
+	write(ctx, http.StatusForbidden, []byte("Forbidden"))
 	ctx.isWritten = true
 }
 
@@ -186,19 +190,26 @@ func (ctx *Context) Forbidden() {
 // matches the corresponding parts to extract the parameters. If the number of parts in the
 // pattern and path does not match, it returns nil.
 func extractParams(path, pattern string) map[string]string {
-	patternParts := strings.Split(pattern, "/")[1:]
-	pathParts := strings.Split(path, "/")[1:]
+	patternParts := strings.Split(pattern, "/")
+	pathParts := strings.Split(path, "/")
 
 	if len(patternParts) != len(pathParts) {
 		return nil
 	}
 
 	params := make(map[string]string, len(patternParts))
-	for i, part := range patternParts {
-		if strings.HasPrefix(part, ":") {
-			params[strings.TrimPrefix(part, ":")] = pathParts[i]
+	for i := 1; i < len(patternParts); i++ {
+		part := patternParts[i]
+		if len(part) > 0 && part[0] == ':' {
+			params[part[1:]] = pathParts[i]
 		}
 	}
 
 	return params
+}
+
+// write writes data to the response body.
+func write(ctx *Context, statusCode int, data []byte) {
+	ctx.Writer.WriteHeader(statusCode)
+	ctx.Writer.Write(data)
 }

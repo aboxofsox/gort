@@ -505,6 +505,16 @@ var (
 		{"POST", "/1/functions"},
 	}
 
+	pokeAPI = []*TestRoute{
+		{"GET", "/api/v2/pokemon/:id"},
+		{"GET", "/api/v2/pokemon-species/:id"},
+		{"GET", "/api/v2/pokemon-color/:id"},
+		{"GET", "/api/v2/pokemon-form/:id"},
+		{"GET", "/api/v2/pokemon-habitat/:id"},
+		{"GET", "/api/v2/pokemon-shape/:id"},
+		{"GET", "/api/v2/pokemon-species/:id"},
+	}
+
 	apis = [][]*TestRoute{githubAPI, gplusAPI, parseAPI}
 )
 
@@ -570,8 +580,47 @@ func BenchmarkGortParseAPI(b *testing.B) {
 	benchmarkRoutes(b, g, parseAPI)
 }
 
+func BenchmarkGortPokeAPI(b *testing.B) {
+	g := New()
+	loadGortRoutes(g, pokeAPI)
+	benchmarkRoutes(b, g, pokeAPI)
+}
+
 func TestGort(t *testing.T) {
 	router := New()
+
+	t.Run("Basic", func(t *testing.T) {
+		router.AddRoute(http.MethodGet, "/", func(ctx *Context) {
+			ctx.WriteString(http.StatusOK, "hello")
+		})
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+
+		res, err := http.Get(ts.URL)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			t.Errorf("expected status code to be %d, got %d", http.StatusOK, res.StatusCode)
+			return
+		}
+
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if string(data) != "hello" {
+			t.Error("expected response body to be hello")
+			return
+		}
+
+	})
 
 	t.Run("Router", func(t *testing.T) {
 		router.AddRoute(http.MethodGet, "/users/:id", func(ctx *Context) {

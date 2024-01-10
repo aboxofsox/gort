@@ -10,9 +10,9 @@ type rtree struct {
 
 type rnode struct {
 	children     map[string]*rnode // children is a map that stores the child nodes of the current node.
+	dynamicChild *rnode            // dynamicChild is a pointer to the dynamic child node of the current node.
 	route        *Route            // route is a pointer to the Route associated with the current node.
 	isLast       bool              // isLast indicates whether the current node is the last node in a route.
-	dynamicChild *rnode            // dynamicChild is a pointer to the dynamic child node of the current node.
 	isDynamic    bool              // isDynamic indicates whether the current node is a dynamic node.
 }
 
@@ -33,9 +33,8 @@ func newRTree() *rtree {
 // If the part is a dynamic part (starts with ":"), the current node's dynamicChild is updated.
 // Finally, the last node in the traversal is marked as the last node and its route is set to the input route.
 func (t *rtree) add(r *Route) {
-	pattern := r.Pattern
 	current := t.root
-	parts := strings.Split(pattern, "/")[1:]
+	parts := split(r.Pattern)
 
 	for _, part := range parts {
 		if part == "" {
@@ -64,7 +63,7 @@ func (t *rtree) add(r *Route) {
 // It returns the corresponding Route if found, otherwise it returns nil.
 func (t *rtree) find(path string) *Route {
 	current := t.root
-	parts := strings.Split(path, "/")[1:]
+	parts := split(path)
 
 	for _, part := range parts {
 		if part == "" {
@@ -85,4 +84,8 @@ func (t *rtree) find(path string) *Route {
 	}
 
 	return current.route
+}
+
+func split(p string) []string {
+	return strings.Split(p, "/")
 }

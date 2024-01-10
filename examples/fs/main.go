@@ -12,5 +12,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	server.Start(":8080")
+	server.Start("127.0.0.1:8080")
 }

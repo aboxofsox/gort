@@ -38,7 +38,7 @@ func main() {
 		ctx.WriteString(http.StatusOK, "the user middleware is responsable for setting the X-User header")
 	})
 
-	err := http.ListenAndServe(":8080", router)
+	err := http.ListenAndServe("127.0.0.1:8080", router)
 	if err != nil {
 		panic(err)
 	}

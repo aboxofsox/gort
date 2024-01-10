@@ -44,5 +44,5 @@ func main() {
 	server.Handle("GET", "/hello/:name", hello)
 	server.Handle("GET", "/users/:id", handleUser)
 
-	server.Start(":8080")
+	server.Start("127.0.0.1:8080")
 }

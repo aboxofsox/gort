@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/aboxofsox/gort"
@@ -13,6 +14,10 @@ func main() {
 		"foo": "bar",
 		"baz": "qux",
 	}
+
+	router.AddRoute(http.MethodGet, "/", func(ctx *gort.Context) {
+		ctx.WriteString(http.StatusOK, "Hello World")
+	})
 
 	router.AddRoute(http.MethodGet, "/users/:id", func(ctx *gort.Context) {
 		id, ok := ctx.Params["id"]
@@ -59,8 +64,6 @@ func main() {
 		ctx.JSON(http.StatusOK, ctx.Store.Items)
 	})
 
-	err := http.ListenAndServe(":8080", router)
-	if err != nil {
-		panic(err)
-	}
+	log.Fatal(http.ListenAndServe("127.0.0.1:8080", router))
+
 }

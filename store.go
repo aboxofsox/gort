@@ -22,10 +22,8 @@ func (s *Store) Set(key string, value any) {
 func (s *Store) Get(key string) (any, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, ok := s.Items[key]; !ok {
-		return nil, false
-	}
-	return s.Items[key], true
+	value, ok := s.Items[key]
+	return value, ok
 }
 
 func (s *Store) Remove(key string) {
@@ -37,7 +35,9 @@ func (s *Store) Remove(key string) {
 func (s *Store) Purge() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.Items = make(map[string]any)
+	for k := range s.Items {
+		delete(s.Items, k)
+	}
 }
 
 func (s *Store) Size() int {
