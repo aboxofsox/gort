@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	_ "net/http/pprof"
 	"testing"
 )
 
@@ -558,12 +559,16 @@ func gortHandler(method, path string) HandlerFunc {
 
 func BenchmarkGortStatic(b *testing.B) {
 	g := New()
+
 	loadGortRoutes(g, static)
 	benchmarkRoutes(b, g, static)
 }
 
 func BenchmarkGortGitHubAPI(b *testing.B) {
 	g := New()
+	// go func() {
+	// 	http.ListenAndServe("localhost:8080", http.DefaultServeMux)
+	// }()
 	loadGortRoutes(g, githubAPI)
 	benchmarkRoutes(b, g, githubAPI)
 }
@@ -664,7 +669,7 @@ func TestGort(t *testing.T) {
 			}
 			key := ctx.Params["key"]
 
-			ctx.Store.Set(key, ctx.Request.RemoteAddr)
+			ctx.Store.Set(key, ctx.Request().RemoteAddr)
 			ctx.JSON(http.StatusOK, "ok")
 		})
 

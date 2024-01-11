@@ -15,26 +15,26 @@ func main() {
 		"baz": "qux",
 	}
 
-	router.AddRoute(http.MethodGet, "/", func(ctx *gort.Context) {
-		ctx.WriteString(http.StatusOK, "Hello World")
+	router.AddRoute(http.MethodGet, "/", func(c *gort.Context) {
+		c.WriteString(http.StatusOK, "Hello World")
 	})
 
-	router.AddRoute(http.MethodGet, "/users/:id", func(ctx *gort.Context) {
-		id, ok := ctx.Params["id"]
+	router.AddRoute(http.MethodGet, "/users/:id", func(c *gort.Context) {
+		id, ok := c.Params["id"]
 		if !ok {
-			ctx.BadRequest()
+			c.BadRequest()
 			return
 		}
 		user, ok := userData[id]
 		if !ok {
-			ctx.NotFound()
+			c.NotFound()
 			return
 		}
 
-		ctx.WriteString(http.StatusOK, "hello "+user)
+		c.WriteString(http.StatusOK, "hello "+user)
 	})
 
-	router.AddRoute(http.MethodGet, "/users", func(ctx *gort.Context) {
+	router.AddRoute(http.MethodGet, "/users", func(c *gort.Context) {
 		users := make([]string, 0, len(userData))
 
 		for _, user := range userData {
@@ -42,26 +42,26 @@ func main() {
 		}
 
 		if len(users) == 0 {
-			ctx.WriteString(http.StatusNotFound, "no users")
+			c.WriteString(http.StatusNotFound, "no users")
 			return
 		}
 
-		ctx.JSON(http.StatusOK, users)
+		c.JSON(http.StatusOK, users)
 	})
 
-	router.AddRoute(http.MethodGet, "/store/:key", func(ctx *gort.Context) {
-		key, ok := ctx.Params["key"]
+	router.AddRoute(http.MethodGet, "/store/:key", func(c *gort.Context) {
+		key, ok := c.Params["key"]
 		if !ok {
-			ctx.BadRequest()
+			c.BadRequest()
 			return
 		}
 
-		ctx.Store.Set(key, ctx.Request.RemoteAddr)
-		ctx.JSON(http.StatusOK, "ok")
+		c.Store.Set(key, c.Request().RemoteAddr)
+		c.JSON(http.StatusOK, "ok")
 	})
 
-	router.AddRoute(http.MethodGet, "/store", func(ctx *gort.Context) {
-		ctx.JSON(http.StatusOK, ctx.Store.Items)
+	router.AddRoute(http.MethodGet, "/store", func(c *gort.Context) {
+		c.JSON(http.StatusOK, c.Store.Items)
 	})
 
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", router))

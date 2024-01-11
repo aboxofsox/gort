@@ -70,13 +70,16 @@ func (t *rtree) find(path string) *Route {
 			continue
 		}
 
-		if next, ok := current.children[part]; ok {
-			current = next
-		} else if current.dynamicChild != nil {
-			current = current.dynamicChild
-		} else {
-			return nil
+		next, ok := current.children[part]
+		if !ok {
+			if current.dynamicChild != nil {
+				next = current.dynamicChild
+			} else {
+				return nil
+			}
 		}
+
+		current = next
 	}
 
 	if !current.isLast {

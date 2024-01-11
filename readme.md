@@ -22,8 +22,8 @@ func main() {
         "foo": "bar",
     }
 
-    server.HandleFunc(http.MethodGet, "/users/:id", func(ctx *gort.Context){
-        id, ok := ctx.Params["id"]
+    server.HandleFunc(http.MethodGet, "/users/:id", func(c *gort.Context){
+        id, ok := c.Params["id"]
         if !ok {
             // handle
         }
@@ -33,7 +33,7 @@ func main() {
             // handle
         }
 
-        ctx.JSON(user)
+        c.JSON(user)
     })
 
     server.Start(":8080")
@@ -55,18 +55,18 @@ import (
 func main() {
     router := gort.NewRouter()
 
-    router.AddRoute(http.MethodGet, "/", func(ctx *gort.Context){
-        ctx.WriteString("Hello World")
+    router.AddRoute(http.MethodGet, "/", func(c *gort.Context){
+        c.WriteString("Hello World")
     })
 
-    router.AddRoute(http.MethodGet, "/users/:id", func(ctx *gort.Context){
-        id := ctx.Params["id"]
+    router.AddRoute(http.MethodGet, "/users/:id", func(c *gort.Context){
+        id := c.Params["id"]
         if id == "" {
-            ctx.BadRequest()
+            c.BadRequest()
             return
         }
 
-        ctx.WriteString(id)
+        c.WriteString(id)
     })
 
     err := http.ListenAndServe(":8080", router)
@@ -91,37 +91,37 @@ import (
 func main() {
 	router := gort.NewRouter()
 
-	router.AddRoute(http.MethodGet, "/store/:key/:value", func(ctx *gort.Context) {
-		key, ok := ctx.Params["key"]
+	router.AddRoute(http.MethodGet, "/store/:key/:value", func(c *gort.Context) {
+		key, ok := c.Params["key"] // or c.Param("key")
 		if !ok {
-			ctx.BadRequest()
+			c.BadRequest()
 			return
 		}
 
-		value, ok := ctx.Params["value"]
+		value, ok := c.Params["value"]
 		if !ok {
-			ctx.BadRequest()
+			c.BadRequest()
 			return
 		}
 
-		ctx.Store.Set(key, value) // set the value in the store
-		ctx.JSON("ok")
+		c.Store.Set(key, value) // set the value in the store
+		c.JSON("ok")
 	})
 
-	router.AddRoute(http.MethodGet, "/store/:key", func(ctx *gort.Context) {
-		key, ok := ctx.Params["key"]
+	router.AddRoute(http.MethodGet, "/store/:key", func(c *gort.Context) {
+		key, ok := c.Params["key"]
 		if !ok {
-			ctx.BadRequest()
+			c.BadRequest()
 			return
 		}
 
-		value, ok := ctx.Store.Get(key) // get the value from the store.
+		value, ok := c.Store.Get(key) // get the value from the store.
 		if !ok {
-			ctx.NotFound()
+			c.NotFound()
 			return
 		}
 
-		ctx.JSON(value)
+		c.JSON(value)
 	})
 
 	err := http.ListenAndServe(":8080", router)
@@ -144,21 +144,21 @@ import (
 )
 
 func userMiddleware(users map[string]string) gort.HandlerFunc {
-	return func(ctx *gort.Context) {
-		id := ctx.Param("id")
+	return func(c *gort.Context) {
+		id := c.Param("id")
 
 		user, ok := users[id]
 		if !ok {
-			ctx.NotFound()
+			c.NotFound()
 			return
 		}
 
-		ctx.SetHeader("X-User", user)
+		c.SetHeader("X-User", user)
 	}
 }
 
-func loggingMiddleware(ctx *gort.Context) {
-	log.Println(ctx.Request.Method, ctx.Request.URL.Path)
+func loggingMiddleware(c *gort.Context) {
+	log.Println(c.Request.Method, c.Request.URL.Path)
 }
 
 func main() {
@@ -168,17 +168,99 @@ func main() {
 		"123": "bar",
 	}
 
-	router.AddMiddleware(userMiddleware(users)) // add the middleware to the router
-	router.AddMiddleware(loggingMiddleware)
+    router.AddMiddlewares(userMiddleware(users), loggingMiddleware) // add your middlewares
 
-	router.AddRoute(http.MethodGet, "/users/:id", func(ctx *gort.Context) {
-		ctx.WriteString("hello world")
+	router.AddRoute(http.MethodGet, "/users/:id", func(c *gort.Context) {
+		c.WriteString("hello world")
 	})
 
 	err := http.ListenAndServe(":8080", router)
 	if err != nil {
 		panic(err)
 	}
+}
+
+```
+
+### CRUD
+```go
+package main
+
+import (
+	"log"
+	"net/http"
+
+	"github.com/aboxofsox/gort"
+)
+
+func main() {
+	g := gort.New()
+
+	g.GET("/", func(c *gort.Context) {
+		c.WriteString(200, "hello")
+	})
+
+	g.GET("/users", func(c *gort.Context) {
+		c.JSON(200, c.Store.Items)
+	})
+
+	g.GET("/users/:id", func(c *gort.Context) {
+		id := c.Param("id")
+		if id == "" {
+			c.BadRequest()
+			return
+		}
+
+		user, ok := c.Store.Get(id)
+		if !ok {
+			c.NotFound()
+			return
+		}
+
+		c.WriteString(200, "hello "+user.(string))
+	})
+
+	g.GET("/users/:id/delete", func(c *gort.Context) {
+		id := c.Param("id")
+		if id == "" {
+			c.BadRequest()
+			return
+		}
+
+		c.Store.Remove(id)
+
+		c.WriteString(200, "user deleted")
+	})
+
+    g.POST("/users/:id/update", func(c *gort.Context){
+        id := c.Param("id")
+        if id == "" {
+            c.BadRequest()
+            return
+        }
+
+        name := c.FormValue("name")
+        c.Store.Set(id, name)
+
+        c.WriteString(200, "user updated "+name)
+    })
+
+	g.POST("/create", func(c *gort.Context) {
+		c.Request().ParseForm()
+
+		name := c.FormValue("name")
+		id := c.FormValue("id")
+		if id == "" || name == "" {
+			c.BadRequest()
+			return
+		}
+
+		c.Store.Set(id, name)
+
+		c.WriteString(200, "user created: "+name)
+	})
+
+	log.Fatal(http.ListenAndServe("127.0.0.1:8080", g))
 }
 
 ```

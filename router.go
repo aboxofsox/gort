@@ -97,7 +97,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := &Context{
 		Params:  extractParams(req.URL.Path, route.Pattern),
 		Writer:  w,
-		Request: req,
+		request: req,
 		Store:   r.store,
 		Logger:  r.Logger,
 	}
