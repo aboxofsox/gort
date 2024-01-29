@@ -18,6 +18,7 @@ type Router struct {
 	store       *Store
 	middlewares []HandlerFunc
 	Logger      *Logger
+	Groups      []*Group
 }
 
 func New() *Router {
@@ -42,6 +43,18 @@ func (r *Router) AddRoute(method, pattern string, handler HandlerFunc) {
 	})
 }
 
+// Group creates a new group.
+func (r *Router) Group(prefix string) *Group {
+	g := &Group{
+		prefix: prefix,
+		router: r,
+	}
+
+	r.Groups = append(r.Groups, g)
+
+	return g
+}
+
 func (r *Router) GET(pattern string, handler HandlerFunc) {
 	r.AddRoute(http.MethodGet, pattern, handler)
 }
@@ -62,14 +75,10 @@ func (r *Router) PATCH(pattern string, handler HandlerFunc) {
 	r.AddRoute(http.MethodPatch, pattern, handler)
 }
 
-// AddMiddleware adds a new middleware to the router.
+// Use adds a new middleware to the router.
 // It takes the middleware function as parameter.
 // The middleware function is called before the handler function.
-func (r *Router) AddMiddleware(handler HandlerFunc) {
-	r.middlewares = append(r.middlewares, handler)
-}
-
-func (r *Router) AddMiddlewares(handlers ...HandlerFunc) {
+func (r *Router) Use(handlers ...HandlerFunc) {
 	r.middlewares = append(r.middlewares, handlers...)
 }
 
