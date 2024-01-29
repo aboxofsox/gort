@@ -8,6 +8,9 @@ import (
 	"strings"
 )
 
+// Context holdesHTTP request context. It includes parameters,
+// the response writer, the request, the store, the logger, and a flag
+// indicating whether the response has been written.
 type Context struct {
 	Params    map[string]string
 	Writer    http.ResponseWriter
@@ -17,6 +20,7 @@ type Context struct {
 	isWritten bool
 }
 
+// CreateContext creates a new context.
 func CreateContext(w http.ResponseWriter, r *http.Request, store *Store, logger *Logger) *Context {
 	return &Context{
 		Params:  make(map[string]string),
@@ -27,6 +31,7 @@ func CreateContext(w http.ResponseWriter, r *http.Request, store *Store, logger 
 	}
 }
 
+// setParams sets the parameters for the context.
 func (ctx *Context) setParams(params map[string]string) {
 	ctx.Params = params
 }
@@ -226,14 +231,17 @@ func (ctx *Context) Forbidden() error {
 	return nil
 }
 
+// Request returns the HTTP request.
 func (ctx *Context) Request() *http.Request {
 	return ctx.request
 }
 
+// FormValue returns the value of the given form key.
 func (ctx *Context) FormValue(key string) string {
 	return ctx.request.FormValue(key)
 }
 
+// FormValues returns the values of the form.
 func (ctx *Context) FormValues() map[string][]string {
 	return ctx.request.Form
 }
