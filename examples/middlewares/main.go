@@ -33,7 +33,7 @@ func main() {
 		"123": "bar",
 	}
 
-	router.AddMiddlewares(userMiddleware(users), loggingMiddleware)
+	router.Use(userMiddleware(users), loggingMiddleware)
 
 	router.AddRoute(http.MethodGet, "/users/:id", func(c *gort.Context) {
 		c.WriteString(http.StatusOK, "the user middleware is responsable for setting the X-User header")
