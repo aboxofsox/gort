@@ -130,33 +130,41 @@ func (r *Router) Static(prefix, dir string) error {
 	}
 
 	readDir(dir, func(path string, entry os.DirEntry) {
-		f, err := os.ReadFile(path)
+		content, err := os.ReadFile(path)
 		if err != nil {
 			log.Printf("Error reading file %s: %v", path, err)
 			return
 		}
 
-		ext := filepath.Ext(path)
-		pattern := strings.Replace(filepath.Base(path), ext, "", 1)
-		if pattern == "index" {
-			pattern = "" // root
+		leaf := filepath.Base(path)
+		if leaf == "index.html" || leaf == "index.htm" {
+			leaf = ""
 		}
 
-		isHtml := strings.HasSuffix(path, ".htnml") || strings.HasSuffix(path, "htm")
-		r.registerStaticRoute(pattern, f, isHtml)
+		r.registerStaticRoute(prefix+"/"+leaf, content)
 
 	})
 
 	return nil
 }
 
-func (r *Router) registerStaticRoute(pattern string, content []byte, isHTML bool) error {
+func (r *Router) registerStaticRoute(pattern string, content []byte) error {
 	r.GET(pattern, func(ctx *Context) error {
-		if isHTML {
-			return ctx.HTML(http.StatusOK, string(content))
-		} else {
-			return ctx.Send(http.StatusOK, content)
-		}
+		setContentType(filepath.Ext(pattern), ctx)
+		return ctx.Send(200, content)
 	})
 	return nil
+}
+
+func setContentType(ext string, ctx *Context) {
+	switch ext {
+	case ".html", ".htm":
+		ctx.SetHeader("Content-Type", "text/html")
+	case ".css":
+		ctx.SetHeader("Content-Type", "text/css")
+	case ".js":
+		ctx.SetHeader("Content-Type", "text/javascript")
+	case ".png", ".jpg", ".jpeg", ".gif":
+		ctx.SetHeader("content-type", "image/"+strings.TrimPrefix(ext, "."))
+	}
 }
