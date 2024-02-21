@@ -555,7 +555,6 @@ func gortHandler(method, path string) HandlerFunc {
 	return func(ctx *Context) error {
 		return ctx.WriteString(http.StatusOK, "OK")
 	}
-	return nil
 }
 
 func BenchmarkGortStatic(b *testing.B) {
