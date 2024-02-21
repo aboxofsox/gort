@@ -7,21 +7,21 @@ import (
 )
 
 func writeMessage(msg string) gort.HandlerFunc {
-	return func(c *gort.Context) {
-		c.WriteString(http.StatusOK, msg)
+	return func(c *gort.Context) error {
+		return c.WriteString(http.StatusOK, msg)
 	}
 }
 
-func ping(c *gort.Context) {
-	c.WriteString(http.StatusOK, "pong")
+func ping(c *gort.Context) error {
+	return c.WriteString(http.StatusOK, "pong")
 }
 
-func hello(c *gort.Context) {
+func hello(c *gort.Context) error {
 	name := c.Params["name"]
-	c.WriteString(http.StatusOK, "Hello "+name)
+	return c.WriteString(http.StatusOK, "Hello "+name)
 }
 
-func handleUser(c *gort.Context) {
+func handleUser(c *gort.Context) error {
 	userData := map[string]string{
 		"foo": "bar",
 		"baz": "qux",
@@ -29,11 +29,11 @@ func handleUser(c *gort.Context) {
 
 	user, ok := userData[c.Params["id"]]
 	if !ok {
-		c.WriteString(http.StatusOK, "User not found")
-		return
+		return c.WriteString(http.StatusOK, "User not found")
+
 	}
 
-	c.JSON(http.StatusOK, user)
+	return c.JSON(http.StatusOK, user)
 }
 
 func main() {

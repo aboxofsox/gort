@@ -8,22 +8,24 @@ import (
 )
 
 func userMiddleware(users map[string]string) gort.HandlerFunc {
-	return func(c *gort.Context) {
+	return func(c *gort.Context) error {
 		id := c.Param("id")
 
 		user, ok := users[id]
 		if !ok {
-			c.NotFound()
-			return
+			return c.NotFound()
 		}
 
 		c.SetHeader("X-User", user)
+
+		return nil
 	}
 }
 
-func loggingMiddleware(c *gort.Context) {
+func loggingMiddleware(c *gort.Context) error {
 	r := c.Request()
 	log.Println(r.Method, r.URL.Path)
+	return nil
 }
 
 func main() {
@@ -35,8 +37,8 @@ func main() {
 
 	router.Use(userMiddleware(users), loggingMiddleware)
 
-	router.AddRoute(http.MethodGet, "/users/:id", func(c *gort.Context) {
-		c.WriteString(http.StatusOK, "the user middleware is responsable for setting the X-User header")
+	router.AddRoute(http.MethodGet, "/users/:id", func(c *gort.Context) error {
+		return c.WriteString(http.StatusOK, "the user middleware is responsable for setting the X-User header")
 	})
 
 	err := http.ListenAndServe("127.0.0.1:8080", router)

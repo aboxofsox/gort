@@ -552,9 +552,10 @@ func loadGortRoutes(g *Router, routes []*TestRoute) {
 }
 
 func gortHandler(method, path string) HandlerFunc {
-	return func(ctx *Context) {
-		ctx.WriteString(http.StatusOK, "OK")
+	return func(ctx *Context) error {
+		return ctx.WriteString(http.StatusOK, "OK")
 	}
+	return nil
 }
 
 func BenchmarkGortStatic(b *testing.B) {
@@ -595,8 +596,8 @@ func TestGort(t *testing.T) {
 	router := New()
 
 	t.Run("Basic", func(t *testing.T) {
-		router.AddRoute(http.MethodGet, "/", func(ctx *Context) {
-			ctx.WriteString(http.StatusOK, "hello")
+		router.AddRoute(http.MethodGet, "/", func(ctx *Context) error {
+			return ctx.WriteString(http.StatusOK, "hello")
 		})
 
 		ts := httptest.NewServer(router)
@@ -628,8 +629,8 @@ func TestGort(t *testing.T) {
 	})
 
 	t.Run("Router", func(t *testing.T) {
-		router.AddRoute(http.MethodGet, "/users/:id", func(ctx *Context) {
-			ctx.WriteString(http.StatusOK, "hello")
+		router.AddRoute(http.MethodGet, "/users/:id", func(ctx *Context) error {
+			return ctx.WriteString(http.StatusOK, "hello")
 		})
 
 		if router.routes.root == nil {
@@ -661,16 +662,16 @@ func TestGort(t *testing.T) {
 	})
 
 	t.Run("Store", func(t *testing.T) {
-		router.AddRoute(http.MethodGet, "/store/:key", func(ctx *Context) {
+		router.AddRoute(http.MethodGet, "/store/:key", func(ctx *Context) error {
 			value, ok := ctx.Store.Get(ctx.Params["key"])
 			if ok {
-				ctx.JSON(http.StatusOK, value)
-				return
+				return ctx.JSON(http.StatusOK, value)
+
 			}
 			key := ctx.Params["key"]
 
 			ctx.Store.Set(key, ctx.Request().RemoteAddr)
-			ctx.JSON(http.StatusOK, "ok")
+			return ctx.JSON(http.StatusOK, "ok")
 		})
 
 		ts := httptest.NewServer(router)
@@ -713,8 +714,8 @@ func TestGort(t *testing.T) {
 	})
 
 	t.Run("Param", func(t *testing.T) {
-		router.AddRoute(http.MethodGet, "/users/:id", func(ctx *Context) {
-			ctx.WriteString(http.StatusOK, ctx.Param("id"))
+		router.AddRoute(http.MethodGet, "/users/:id", func(ctx *Context) error {
+			return ctx.WriteString(http.StatusOK, ctx.Param("id"))
 		})
 
 		ts := httptest.NewServer(router)
@@ -746,9 +747,9 @@ func TestGort(t *testing.T) {
 	})
 
 	t.Run("SetHeader", func(t *testing.T) {
-		router.AddRoute(http.MethodGet, "/header", func(ctx *Context) {
+		router.AddRoute(http.MethodGet, "/header", func(ctx *Context) error {
 			ctx.SetHeader("X-Test", "test")
-			ctx.WriteString(http.StatusOK, "hello")
+			return ctx.WriteString(http.StatusOK, "hello")
 		})
 
 		ts := httptest.NewServer(router)
@@ -785,11 +786,11 @@ func TestGort(t *testing.T) {
 	})
 
 	t.Run("SetHeaders", func(t *testing.T) {
-		router.AddRoute(http.MethodGet, "/headers", func(ctx *Context) {
+		router.AddRoute(http.MethodGet, "/headers", func(ctx *Context) error {
 			ctx.SetHeaders(map[string]string{
 				"X-Test": "test",
 			})
-			ctx.WriteString(http.StatusOK, "hello")
+			return ctx.WriteString(http.StatusOK, "hello")
 		})
 
 		ts := httptest.NewServer(router)
@@ -826,12 +827,12 @@ func TestGort(t *testing.T) {
 	})
 
 	t.Run("SetCookie", func(t *testing.T) {
-		router.AddRoute(http.MethodGet, "/cookie", func(ctx *Context) {
+		router.AddRoute(http.MethodGet, "/cookie", func(ctx *Context) error {
 			ctx.SetCookie(&http.Cookie{
 				Name:  "test",
 				Value: "test",
 			})
-			ctx.WriteString(http.StatusOK, "hello")
+			return ctx.WriteString(http.StatusOK, "hello")
 		})
 
 		ts := httptest.NewServer(router)
@@ -880,8 +881,8 @@ func TestGort(t *testing.T) {
 	})
 
 	t.Run("SetStatus", func(t *testing.T) {
-		router.AddRoute(http.MethodGet, "/status", func(ctx *Context) {
-			ctx.WriteString(http.StatusOK, "hello")
+		router.AddRoute(http.MethodGet, "/status", func(ctx *Context) error {
+			return ctx.WriteString(http.StatusOK, "hello")
 		})
 
 		ts := httptest.NewServer(router)
@@ -913,8 +914,8 @@ func TestGort(t *testing.T) {
 	})
 
 	t.Run("GetHeader", func(t *testing.T) {
-		router.AddRoute(http.MethodGet, "/get-header", func(ctx *Context) {
-			ctx.WriteString(http.StatusOK, ctx.GetHeader("X-Test"))
+		router.AddRoute(http.MethodGet, "/get-header", func(ctx *Context) error {
+			return ctx.WriteString(http.StatusOK, ctx.GetHeader("X-Test"))
 		})
 
 		ts := httptest.NewServer(router)
@@ -954,8 +955,8 @@ func TestGort(t *testing.T) {
 	})
 
 	t.Run("Send", func(t *testing.T) {
-		router.AddRoute(http.MethodGet, "/send", func(ctx *Context) {
-			ctx.Send(http.StatusOK, []byte("hello"))
+		router.AddRoute(http.MethodGet, "/send", func(ctx *Context) error {
+			return ctx.Send(http.StatusOK, []byte("hello"))
 		})
 
 		ts := httptest.NewServer(router)
@@ -987,12 +988,12 @@ func TestGort(t *testing.T) {
 	})
 
 	t.Run("Redirect", func(t *testing.T) {
-		router.AddRoute(http.MethodGet, "/redirect", func(ctx *Context) {
-			ctx.Redirect("/redirected")
+		router.AddRoute(http.MethodGet, "/redirect", func(ctx *Context) error {
+			return ctx.Redirect("/redirected")
 		})
 
-		router.AddRoute(http.MethodGet, "/redirected", func(ctx *Context) {
-			ctx.WriteString(http.StatusFound, "hello")
+		router.AddRoute(http.MethodGet, "/redirected", func(ctx *Context) error {
+			return ctx.WriteString(http.StatusFound, "hello")
 		})
 
 		ts := httptest.NewServer(router)

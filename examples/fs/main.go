@@ -2,15 +2,13 @@ package main
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/aboxofsox/gort"
 )
 
 func main() {
-	server := gort.NewServer()
-	err := server.FileServer("pages", "/")
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	server.Start("127.0.0.1:8080")
+	g := gort.New()
+	g.Static("/", "pages")
+	log.Fatal(http.ListenAndServe("127.0.0.1:8080", g))
 }

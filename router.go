@@ -1,11 +1,14 @@
 package gort
 
 import (
+	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
-type HandlerFunc func(*Context)
+type HandlerFunc func(*Context) error
 
 type Route struct {
 	Method  string
@@ -116,4 +119,44 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	route.Handler(ctx)
+}
+
+// Static serves static files from a given directory.
+// The prefix is the first segment of the path.
+// i.e. "/assets/foo.jpg"
+func (r *Router) Static(prefix, dir string) error {
+	if _, err := os.Stat(dir); err != nil {
+		return err
+	}
+
+	readDir(dir, func(path string, entry os.DirEntry) {
+		f, err := os.ReadFile(path)
+		if err != nil {
+			log.Printf("Error reading file %s: %v", path, err)
+			return
+		}
+
+		ext := filepath.Ext(path)
+		pattern := strings.Replace(filepath.Base(path), ext, "", 1)
+		if pattern == "index" {
+			pattern = "" // root
+		}
+
+		isHtml := strings.HasSuffix(path, ".htnml") || strings.HasSuffix(path, "htm")
+		r.registerStaticRoute(pattern, f, isHtml)
+
+	})
+
+	return nil
+}
+
+func (r *Router) registerStaticRoute(pattern string, content []byte, isHTML bool) error {
+	r.GET(pattern, func(ctx *Context) error {
+		if isHTML {
+			return ctx.HTML(http.StatusOK, string(content))
+		} else {
+			return ctx.Send(http.StatusOK, content)
+		}
+	})
+	return nil
 }
