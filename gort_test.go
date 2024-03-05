@@ -1022,4 +1022,83 @@ func TestGort(t *testing.T) {
 			return
 		}
 	})
+
+	t.Run("Middleware", func(t *testing.T) {
+		router.Use(func(next HandlerFunc) HandlerFunc {
+			return func(ctx *Context) error {
+				ctx.SetHeader("X-Test", "test")
+				return next(ctx)
+			}
+		})
+
+		router.AddRoute(http.MethodGet, "/middleware", func(ctx *Context) error {
+			return ctx.WriteString(http.StatusOK, "hello")
+		})
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+
+		res, err := http.Get(ts.URL + "/middleware")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			t.Errorf("expected status code to be %d, got %d", http.StatusOK, res.StatusCode)
+			return
+		}
+
+		if res.Header.Get("X-Test") != "test" {
+			t.Error("expected X-Test header to be test")
+			return
+		}
+
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if string(data) != "hello" {
+			t.Error("expected response body to be hello, got ", string(data))
+			return
+		}
+	})
+
+	t.Run("Group", func(t *testing.T) {
+		group := router.Group("/group")
+		group.GET("/test", func(ctx *Context) error {
+			return ctx.WriteString(http.StatusOK, "hello")
+		})
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+
+		res, err := http.Get(ts.URL + "/group/test")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			t.Errorf("expected status code to be %d, got %d", http.StatusOK, res.StatusCode)
+			return
+		}
+
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if string(data) != "hello" {
+			t.Error("expected response body to be hello, got ", string(data))
+			return
+		}
+
+	})
 }
