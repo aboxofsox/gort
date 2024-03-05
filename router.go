@@ -9,6 +9,7 @@ import (
 )
 
 type HandlerFunc func(*Context) error
+type MiddlewareFunc func(HandlerFunc) HandlerFunc
 
 type Route struct {
 	Method  string
@@ -19,7 +20,7 @@ type Route struct {
 type Router struct {
 	routes      *rtree
 	store       *Store
-	middlewares []HandlerFunc
+	middlewares []MiddlewareFunc
 	Logger      *Logger
 	Groups      []*Group
 }
@@ -29,7 +30,7 @@ func New() *Router {
 		routes:      newRTree(),
 		store:       NewStore(),
 		Logger:      NewLogger(os.Stdout),
-		middlewares: make([]HandlerFunc, 0),
+		middlewares: make([]MiddlewareFunc, 0),
 	}
 }
 
@@ -81,8 +82,8 @@ func (r *Router) PATCH(pattern string, handler HandlerFunc) {
 // Use adds a new middleware to the router.
 // It takes the middleware function as parameter.
 // The middleware function is called before the handler function.
-func (r *Router) Use(handlers ...HandlerFunc) {
-	r.middlewares = append(r.middlewares, handlers...)
+func (r *Router) Use(middlewares ...MiddlewareFunc) {
+	r.middlewares = append(r.middlewares, middlewares...)
 }
 
 // Find returns the route that matches the given path.
@@ -114,11 +115,13 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		Logger:  r.Logger,
 	}
 
-	for _, handler := range r.middlewares {
-		handler(ctx)
+	handler := route.Handler
+
+	for i := len(r.middlewares) - 1; i >= 0; i-- {
+		handler = r.middlewares[i](handler)
 	}
 
-	route.Handler(ctx)
+	handler(ctx)
 }
 
 // Static serves static files from a given directory.
@@ -136,12 +139,12 @@ func (r *Router) Static(prefix, dir string) error {
 			return
 		}
 
-		leaf := filepath.Base(path)
-		if leaf == "index.html" || leaf == "index.htm" {
-			leaf = ""
+		path = resolvePath(path)
+		if path == "index.html" || path == "index.htm" {
+			path = ""
 		}
 
-		r.registerStaticRoute(prefix+"/"+leaf, content)
+		r.registerStaticRoute(prefix+"/"+path, content)
 
 	})
 
@@ -154,6 +157,14 @@ func (r *Router) registerStaticRoute(pattern string, content []byte) error {
 		return ctx.Send(200, content)
 	})
 	return nil
+}
+
+func resolvePath(path string) string {
+	segments := strings.Split(path, string(os.PathSeparator))
+	if len(segments) > 1 {
+		segments = segments[1:]
+	}
+	return strings.Join(segments, "/")
 }
 
 func setContentType(ext string, ctx *Context) {
