@@ -236,6 +236,11 @@ func (ctx *Context) Request() *http.Request {
 	return ctx.request
 }
 
+// ResponseWriter return teh HTTP response writer.
+func (ctx *Context) ResponseWriter() http.ResponseWriter {
+	return ctx.Writer
+}
+
 // FormValue returns the value of the given form key.
 func (ctx *Context) FormValue(key string) string {
 	return ctx.request.FormValue(key)
