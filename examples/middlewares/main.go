@@ -7,25 +7,30 @@ import (
 	"github.com/aboxofsox/gort"
 )
 
-func userMiddleware(users map[string]string) gort.HandlerFunc {
-	return func(c *gort.Context) error {
-		id := c.Param("id")
+func userMiddleware(users map[string]string) gort.MiddlewareFunc {
+	return func(next gort.HandlerFunc) gort.HandlerFunc {
+		return func(c *gort.Context) error {
+			id := c.Param("id")
 
-		user, ok := users[id]
-		if !ok {
-			return c.NotFound()
+			user, ok := users[id]
+			if !ok {
+				return c.NotFound()
+			}
+
+			c.SetHeader("X-User", user)
+
+			return next(c)
 		}
-
-		c.SetHeader("X-User", user)
-
-		return nil
 	}
 }
 
-func loggingMiddleware(c *gort.Context) error {
-	r := c.Request()
-	log.Println(r.Method, r.URL.Path)
-	return nil
+func loggingMiddleware(next gort.HandlerFunc) gort.HandlerFunc {
+	return func(c *gort.Context) error {
+		r := c.Request()
+		log.Println(r.Method, r.URL.Path)
+
+		return next(c)
+	}
 }
 
 func main() {
