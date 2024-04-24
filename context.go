@@ -53,9 +53,23 @@ func (ctx *Context) SetHeaders(headers map[string]string) {
 	}
 }
 
+func (ctx *Context) WriteHeader(statusCode int) {
+	ctx.Writer.WriteHeader(statusCode)
+}
+
 // SetCookie sets a cookie in the response.
 func (ctx *Context) SetCookie(cookie *http.Cookie) {
 	http.SetCookie(ctx.Writer, cookie)
+}
+
+func (ctx *Context) BindJSON(data any) error {
+	decoder := json.NewDecoder(ctx.request.Body)
+	err := decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SetStatus sets the HTTP status code.

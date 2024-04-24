@@ -1,6 +1,8 @@
 package gort
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -1100,5 +1102,63 @@ func TestGort(t *testing.T) {
 			return
 		}
 
+	})
+
+	t.Run("BindJSON", func(t *testing.T) {
+		type testData struct {
+			Foo string `json:"foo"`
+			Bar string `json:"bar"`
+		}
+
+		router.AddRoute(http.MethodPost, "/bind-json", func(ctx *Context) error {
+			var data testData
+			if err := ctx.BindJSON(&data); err != nil {
+				return ctx.JSON(http.StatusBadRequest, err.Error())
+			}
+
+			return ctx.JSON(http.StatusOK, data)
+		})
+
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+
+		data := testData{
+			Foo: "foo",
+			Bar: "bar",
+		}
+
+		body, err := json.Marshal(data)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		res, err := http.Post(ts.URL+"/bind-json", "application/json", bytes.NewReader(body))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			t.Errorf("expected status code to be %d, got %d", http.StatusOK, res.StatusCode)
+			return
+		}
+
+		var result testData
+		if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+			t.Error(err)
+			return
+		}
+
+		if result.Foo != "foo" {
+			t.Error("expected foo to be foo")
+			return
+		}
+
+		if result.Bar != "bar" {
+			t.Error("expected bar to be bar")
+			return
+		}
 	})
 }
